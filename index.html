@@ -6,7 +6,7 @@ JSON to Html Table/Excel convertor
 1.1 添加全部数据为空的列自动隐藏功能
 -->
 <html>
-<title>FOSS竞品数据分析小工具</title>
+<title>Json数据分析小工具</title>
 <style type="text/css">
   table.gridtable {
       font-family: verdana,arial,sans-serif;
@@ -135,7 +135,7 @@ JSON to Html Table/Excel convertor
         //设置表头
         var keys = Object.keys(arrData[0]);
         keys.forEach(function (item) {
-            row += "<th onclick='hideIt(\""+item+"\");' class=cc_"+item+">" + item + '</th>';
+            row += "<th title='点击可隐藏该列' onclick='hideIt(\""+item+"\");' class=cc_"+item+">" + item + '</th>';
         });
         //换行
         excel += row + "</tr>";
@@ -173,20 +173,37 @@ JSON to Html Table/Excel convertor
         });
 
         excel = node.innerHTML;
+
+        document.getElementById("bottom_button").style.display = 'block';
+    }
+
+    function clearInput() {
+        document.getElementById("json").value='';
+         document.getElementById("json").focus();
+    }
+
+
+    function initPage() {
+       clearInput();
+       document.getElementById("bottom_button").style.display = 'none';
     }
 
 
 </script>
-<body>
-	
-<form>请粘贴通过接口获取的原始JSON数据:<br>
-	<textarea id=json cols=60 rows=20></textarea><br>
-	预览表和excel中的图片高度:<input value=100 id=picWidth><br>
-		<input type=button onclick='genData()' value="生成预览表格">
-		<input type=button onclick='downloadData()' value="下载Excel">
+<body onload='initPage();'>
+<h2>JSON转换表格/Excel的小工具</h2>
+<h4 style="    text-align: -webkit-right;"> by William Ye at github, version 1.1 build 20210515</h4>
+<div>
+<pre><b>使用说明</b><br>1. 通过接口获取列表相关的json数据 <br>2. 复制数据到输入框<br>3. 点击“生成预览表格”按钮<br>4. 点击下载Excel<br>5. Enjoy it!<br>Tips:点击表格标题可以删除不需要的列，可以手工选择表格内容并复制到excel中（不包含删除的列）<br><font color=red>如果图片过多，打开生成的excel时因为需要下载图片，加载会比较慢，这是正常的，请耐心等待片刻</font></pre></div>
+<form>
+    <input type=button onclick='genData()' value="生成预览表格">
+    <input type=button onclick='downloadData()' value="下载Excel">
+    设置生成Excel文件中的图片高度:<input value=100 id=picWidth><input type=button onclick='clearInput();' value='清空输入'><br>
+	<textarea id=json cols=100 rows=20 placeholder="请粘贴通过接口获取的原始JSON数据"></textarea><br>
+ 
 </form>
 
 <div id=tableDiv></div>
-
+<input type=button id='bottom_button' onclick='downloadData()' value="下载Excel">
 </body>
 </html>
