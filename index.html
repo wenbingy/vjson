@@ -1,0 +1,192 @@
+<!-- 
+JSON to Html Table/Excel convertor
+
+1.0 初始版本
+
+1.1 添加全部数据为空的列自动隐藏功能
+-->
+<html>
+<title>FOSS竞品数据分析小工具</title>
+<style type="text/css">
+  table.gridtable {
+      font-family: verdana,arial,sans-serif;
+      font-size:11px;
+      color:#333333;
+      border-width: 1px;
+      border-color: #666666;
+      border-collapse: collapse;
+ }
+ table.gridtable th {
+     border-width: 1px;
+     padding: 8px;
+     border-style: solid;
+     border-color: #666666;
+    background-color: #dedede;
+ }
+ table.gridtable td {
+     border-width: 1px;
+    padding: 8px;
+     border-style: solid;
+     border-color: #666666;
+     background-color: #ffffff;
+ }
+</style>
+
+<script>
+	var excel = null;
+
+    function genData() {
+    	jsonData = document.getElementById("json").value;
+    	picWidth = document.getElementById("picWidth").value;
+    	if (!picWidth) picWidth = 50;
+    	//JsonToExcel(jsonData, "test.xlxs", "sheet", null);
+    	genTable(jsonData, picWidth);
+    }
+
+    function downloadData() {
+    	genExcel("FOSS—竞品数据分析");
+    }
+
+
+    function genExcel(FileName) {
+        //先转化json
+        if (!excel) {
+        	alert("请先生成预览表格");
+        	return;
+        }
+
+     var excelFile = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'>";
+        excelFile += '<meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">';
+        excelFile += '<meta http-equiv="content-type" content="application/vnd.ms-excel';
+        excelFile += '; charset=UTF-8">';
+        excelFile += "<head>";
+        excelFile += "<!--[if gte mso 9]>";
+        excelFile += "<xml>";
+        excelFile += "<x:ExcelWorkbook>";
+        excelFile += "<x:ExcelWorksheets>";
+        excelFile += "<x:ExcelWorksheet>";
+        excelFile += "<x:Name>";
+        excelFile += "{worksheet}";
+        excelFile += "</x:Name>";
+        excelFile += "<x:WorksheetOptions>";
+        excelFile += "<x:DisplayGridlines/>";
+        excelFile += "</x:WorksheetOptions>";
+        excelFile += "</x:ExcelWorksheet>";
+        excelFile += "</x:ExcelWorksheets>";
+        excelFile += "</x:ExcelWorkbook>";
+        excelFile += "</xml>";
+        excelFile += "<![endif]-->";
+        excelFile += "</head>";
+        excelFile += "<body>";
+        excelFile += excel;
+        excelFile += "</body>";
+        excelFile += "</html>";
+
+        var uri = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(excelFile);
+
+        var link = document.createElement("a");
+        link.href = uri;
+
+        link.style = "visibility:hidden";
+        link.download = FileName + ".xlsx";
+
+        document.body.appendChild(link);
+          //document.body.appendChild(excel);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function isPicLink(content) {
+    	if (typeof content === "string") {
+    		content = content.toLowerCase();
+    		if (content.startsWith("http")) {
+    			let picTags = ['jpg', 'jpeg', 'gif', 'png', 'bmp', 'webp']
+    			for(var i=0;i<picTags.length;i++){
+				    if (content.indexOf(picTags[i]) >= 0) return true;
+				}
+    		} 
+    	}
+    	return false;
+    }
+
+     function hideIt(item) {
+    	let eles = document.getElementsByClassName('cc_' + item);
+            	if (eles) {
+            		for (var i = 0; i < eles.length; i ++) {
+            			eles[i].style.display = 'None';
+            			// eles[i].parentElement.removeChild(eles[i]);
+            		}
+            	}
+    }
+
+    function genTable(JSONData, picWidth) {
+        //先转化json
+        var arrData;
+        try{arrData = typeof JSONData != 'object' ? JSON.parse(JSONData) : JSONData;
+    	} catch(error) {
+    		alert("数据格式不正确，请确保原始数据符合json格式");
+    		return
+    	}
+
+        if (!arrData[0]) arrData = [arrData]; 
+        
+        excel = '<table class="gridtable">';
+        var row = "<tr>";
+        //设置表头
+        var keys = Object.keys(arrData[0]);
+        keys.forEach(function (item) {
+            row += "<th onclick='hideIt(\""+item+"\");' class=cc_"+item+">" + item + '</th>';
+        });
+        //换行
+        excel += row + "</tr>";
+        //是否显示
+        displayMap = {}
+        //设置数据
+        for (var i = 0; i < arrData.length; i++) {
+            var row = "<tr style='height:"+picWidth+";'>";
+            for (var index in arrData[i]) {
+            	d = arrData[i][index];
+                // console.log();
+                //var value = arrData[i][index] === "." ? "" : arrData[i][index];
+                if (isPicLink(d)) {
+                	row += '<td class=cc_'+index+'><img width="'+picWidth+'" src="' + d + '"></td>';
+                } else {
+                	row += '<td class=cc_'+index+'>' + d + '</td>';
+                }
+                if (Boolean(d)) { // d有实际意义 则显示
+                	displayMap[index] = true;
+                }
+            }
+            excel += row + "</tr>";
+        }
+
+        excel += "</table>";
+
+
+        var node= document.getElementById("tableDiv");
+		node.innerHTML = excel;
+
+		keys.forEach(function (item) {
+            if (!displayMap[item]) {
+            	hideIt(item);
+            }
+        });
+
+        excel = node.innerHTML;
+    }
+
+
+</script>
+<body>
+	
+<form>请粘贴通过接口获取的原始JSON数据:<br>
+	<textarea id=json cols=60 rows=20></textarea><br>
+	预览表和excel中的图片高度:<input value=100 id=picWidth><br>
+		<input type=button onclick='genData()' value="生成预览表格">
+		<input type=button onclick='downloadData()' value="下载Excel">
+</form>
+
+<div id=tableDiv></div>
+
+</body>
+</html>
